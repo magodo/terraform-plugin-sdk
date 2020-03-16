@@ -1272,7 +1272,7 @@ func (m schemaMap) diffSet(
 				// This is a complex resource
 				for k2, schema := range t.Schema {
 					subK := fmt.Sprintf("%s.%s.%s", k, code, k2)
-					err := m.diff(subK, schema, diff, d, true)
+					err := m.diff(subK, schema, diff, d, all)
 					if err != nil {
 						return err
 					}
@@ -1286,7 +1286,7 @@ func (m schemaMap) diffSet(
 				// This is just a primitive element, so go through each and
 				// just diff each.
 				subK := fmt.Sprintf("%s.%s", k, code)
-				err := m.diff(subK, &t2, diff, d, true)
+				err := m.diff(subK, &t2, diff, d, all)
 				if err != nil {
 					return err
 				}

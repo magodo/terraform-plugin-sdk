@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
 	"os"
 	"reflect"
 	"sort"
@@ -11,7 +12,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
 	"github.com/hashicorp/terraform-plugin-sdk/internal/configs/hcl2shim"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
@@ -1076,14 +1076,6 @@ func TestSchemaMap_Diff(t *testing.T) {
 					"ports.#": &terraform.ResourceAttrDiff{
 						Old: "2",
 						New: "3",
-					},
-					"ports.1": &terraform.ResourceAttrDiff{
-						Old: "1",
-						New: "1",
-					},
-					"ports.2": &terraform.ResourceAttrDiff{
-						Old: "2",
-						New: "2",
 					},
 					"ports.5": &terraform.ResourceAttrDiff{
 						Old: "",
@@ -3157,6 +3149,61 @@ func TestSchemaMap_Diff(t *testing.T) {
 					"stream_enabled": {
 						Old: "true",
 						New: "false",
+					},
+				},
+			},
+		},
+		{
+			Name: "schema.Resource with an optional and null field, defined as element of TypeSet, should not be diff out if that resource has not changed",
+			Schema: map[string]*Schema{
+				"set": {
+					Type: TypeSet,
+					Elem: &Resource{
+						Schema: map[string]*Schema{
+							"id": {
+								Type:     TypeInt,
+								Required: true,
+							},
+							"bar": {
+								Type:     TypeInt,
+								Optional: true,
+							},
+						},
+					},
+					Set: func(a interface{}) int {
+						schemas := a.(map[string]interface{})
+						return schemas["id"].(int)
+					},
+				},
+			},
+
+			State: &terraform.InstanceState{
+				Attributes: map[string]string{
+					"set.#":    "2",
+					"set.1.id": "1",
+					"set.2.id": "2",
+				},
+			},
+			Config: map[string]interface{}{
+				"set": []interface{}{
+					map[string]interface{}{
+						"id": 1,
+					},
+					map[string]interface{}{
+						"id": 3,
+					},
+				},
+			},
+			Diff: &terraform.InstanceDiff{
+				Attributes: map[string]*terraform.ResourceAttrDiff{
+					"set.2.id": {
+						Old:        "2",
+						New:        "0",
+						NewRemoved: true,
+					},
+					"set.3.id": {
+						Old: "",
+						New: "3",
 					},
 				},
 			},
