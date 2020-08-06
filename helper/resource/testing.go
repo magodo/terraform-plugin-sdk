@@ -621,6 +621,7 @@ func Test(t TestT, c TestCase) {
 		if err != nil {
 			t.Fatal(fmt.Errorf(`"%s" is not a valid value: %v`, TestParallelism, err))
 		}
+		log.Printf("[DEBUG] Test: Parallelism: %d", par)
 	}
 	opts := terraform.ContextOpts{ProviderResolver: providerResolver, Parallelism: par}
 
